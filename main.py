@@ -47,7 +47,7 @@ async def start(msg: types.Message):
         InlineKeyboardButton("📝 Регистрация NUTS POKER", url="https://nutspoker.cc/club/AGENT"),
         InlineKeyboardButton("🌐 Наш сайт", url="https://poker-agent.org"),
     )
-    text = f"<b>👋 Привет, {msg.from_user.first_name}!</b>\n\n<b>Добро пожаловать! Мы рады что вы выбрали наш сервис!</b>\n\nВыберите интересующий вас пункт:"
+    text = f"<b>👋 Привет, {msg.from_user.first_name}!</b>\n\n<b>Добро пожаловать! Мы рады, что вы выбрали наш сервис!</b>\n\nВыберите интересующий вас пункт:"
     await msg.answer(text, reply_markup=kb, parse_mode="HTML")
 
 # --- Админка ---
