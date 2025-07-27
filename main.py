@@ -23,8 +23,7 @@ async def start(msg: types.Message):
     await msg.answer(f"👋 Привет!, {msg.from_user.first_name}!\n\nДобро пожаловать!\n\nВыбери интересующий тебя пункт:", reply_markup=kb)
 
 async def on_startup(_):
-    webhook_url = f"https://
-{os.getenv( ' RENDER_EXTERNAL_URL ')}/webhook"
+    webhook_url = f"https://{os.getenv( ' RENDER_EXTERNAL_URL ')}/webhook"
     if not webhook_url or 'None' in webhook_url:
         raise ValueError("RENDER_EXTERNAL_URL не настроен корректно!")
     await bot.set_webhook(url=webhook_url)
