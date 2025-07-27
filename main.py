@@ -39,7 +39,7 @@ async def handle_request(request):
 app.router.add_post('/webhook', handle_request)
 app.on_startup.append(on_startup)  # ✅ правильный способ для aiohttp
 
-if name == '__main__':
+if __name__ == '__main__':
     print(f"Запуск приложения на порту {os.getenv('PORT', 10000)}...")
     PORT = int(os.getenv("PORT", 10000))
     try:
