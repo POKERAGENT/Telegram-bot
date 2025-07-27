@@ -1,6 +1,5 @@
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.utils import executor
 import os
 from aiohttp import web
 
@@ -23,7 +22,7 @@ async def start(msg: types.Message):
     await msg.answer(f"👋 Привет!, {msg.from_user.first_name}!\n\nДобро пожаловать!\n\nВыбери интересующий тебя пункт:", reply_markup=kb)
 
 async def on_startup(_):
-    webhook_url = f"https://{os.getenv( ' RENDER_EXTERNAL_URL ')}/webhook"
+    webhook_url = f"https://{os.getenv('RENDER_EXTERNAL_URL')}/webhook"
     if not webhook_url or 'None' in webhook_url:
         raise ValueError("RENDER_EXTERNAL_URL не настроен корректно!")
     await bot.set_webhook(url=webhook_url)
@@ -39,7 +38,13 @@ async def handle_request(request):
     return web.Response(text="OK")
 
 app.router.add_post('/webhook', handle_request)
+app.on.startup.append(on_startup)
 
-if __name__ == ' __main__ ':
+if __name__ == '__main__':
+    print(f"starting application on port{os.getenv('PORT',10000)}...")
     PORT = int(os.getenv("PORT", 10000))
-    web.run_app(app, host='0.0.0.0', port=PORT)
+    try:
+        web.run_app(app, host='0.0.0.0', port=PORT)
+    except Exception as e:
+        print(f"Application failed: {e}")
+        raise
