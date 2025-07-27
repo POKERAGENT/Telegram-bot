@@ -6,7 +6,7 @@ from aiohttp import web
 
 # --- Настройки и переменные ---
 TOKEN = os.getenv("BOT_TOKEN")
-ADMIN_ID = int(os.getenv("8142712993", 0))  # ID администратора
+ADMIN_ID = int(os.getenv("ADMIN_ID", 0))  # ID администратора
 WEBHOOK_URL = os.getenv("WEBHOOK")
 
 if not TOKEN:
