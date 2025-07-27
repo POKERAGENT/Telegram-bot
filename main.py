@@ -31,10 +31,14 @@ async def on_startup(_):
     
 
 async def handle_request(request):
-    return web.Response(text="Webhook is running")
+    if request.method == "POST":
+        update = types.Update(**await request.json())
+        Dispatcher.set_current(dp)
+        Bot.set_current(bot)
+        await dp.process_update(update)
+    return web.Response(text="OK")
 
-app.router.add_get('/webhook', handle_request)
-app.router.add_post('/webhook', dp.webhook())
+app.router.add_post('/webhook', handle_request)
 
 if __name__ == ' __main__ ':
     PORT = int(os.getenv("PORT", 10000))
