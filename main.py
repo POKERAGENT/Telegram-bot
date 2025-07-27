@@ -3,7 +3,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils import executor
 import os
 
-TOKEN = os.getenv("7996039687:AAG1lXXhiarZbj_4wD3mFscU4ZZzoUZsJ2U")
+TOKEN = os.getenv("BOT_TOKEN")
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
@@ -16,7 +16,7 @@ async def start(msg: types.Message):
         InlineKeyboardButton("📝 Зарегистрироваться NUTS POKER", url="https://nutspoker.cc/club/AGENT"),
         InlineKeyboardButton("🌐 Перейти на наш сайт", url="https://poker-agent.org"),
     )
-    await msg.answer(f"👋 Привет!, {name}!\n\nДобро пожаловать!\n\nВыбери интересующий тебя пункт:", reply_markup=kb)
+    await msg.answer(f"👋 Привет!, {msg.from_user.first_name}!\n\nДобро пожаловать!\n\nВыбери интересующий тебя пункт:", reply_markup=kb)
 
-if name == '__main__':
+if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)
