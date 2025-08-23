@@ -44,14 +44,25 @@ async def start(msg: types.Message):
     kb = InlineKeyboardMarkup(row_width=1)
     kb.add(
         InlineKeyboardButton("📲 Перейти в сообщество", url="https://t.me/+ji-5MkKSIodkODE6"),
-        InlineKeyboardButton("📝 Регистрация NUTS POKER", url="https://nutspoker.cc/club/AGENT"),
         InlineKeyboardButton("🌐 Наш сайт", url="https://poker-agent.org"),
+        InlineKeyboardButton("📝 NUTS POKER - утроим депозит", url="https://nutspoker.cc/club/AGENT"),
+        InlineKeyboardButton("📝 QQPK POKER - утроим депозит", url="https://qqpk8.app:51999?shareCode=MGACZ9"),
+        InlineKeyboardButton("📝 POKERDOM +3000rub на ваш счет", url="https://5pd-stat.com/click/6875327e6bcc63790e5beb28/1786/16153/subaccount"),
+        InlineKeyboardButton("📝 ACR +50$ на ваш счет", url="https://go.wpnaffiliates.com/visit/?bta=236750&nci=5378"),
+        InlineKeyboardButton("📝 TON POKER +30% Рейкбэк", url="https://t.me/myTonPokerBot/lobby?startapp=eyJhZnAiOiJZalZtTlRWak9UWmpObVExWkRZeFlqa3dOV1V3WWpkbFl6YzRPVGt5T1dVIn0"),
+        InlineKeyboardButton("📝 1WIN +30% Рейкбэк", url="https://1wsmhl.life/?p=lu27"),
+        InlineKeyboardButton("📝 RPTBET +20% Рейкбэк", url="https://click.rptbet.org/PaneSU76"),
+        InlineKeyboardButton("📝 PHENOMPOKER +Призы/Розыгрыши", url="https://play.phenompoker.com/register?r=Agent"),
     )
     text = (f"<b>👋 Привет, {msg.from_user.first_name}!</b>\n\n"
     f"<b>Добро пожаловать!</b>\n\n"
-    f"<b>Зарегистрируйтесь в NUTS POKER и мы утроим ваш депозит!</b>\n\n"
-    f"<b>С подробными условиями акции вы можете ознакомиться на сайте в разделе АКЦИИ, или в сообществе!</b>\n\n"
-    f"<b>Выберите интересующий вас пункт:</b>")
+    f"<b>Здесь собраны самые выгодные предложения для игроков:</b>\n\n"
+    f"<b>💰 эксклюзивные бонусы при регистрации!</b>\n\n"
+    f"<b>🎁 бонусы на депозиты!</b>\n\n"
+    f"<b>♻️ дополнительный рейкбэк!</b>\n\n"
+    f"<b>📈 доступ к закрытым акциям и сообществу!</b>\n\n"
+    f"<b>ℹ️ С подробными условиями каждого предложения, новостями и розыгрышами вы можете ознакомиться в с нашем сообществе, или на сайте в разделе АКЦИИ!</b>\n\n"
+    f"<b>Выберите интересующий вас пункт:👇</b>")
     await msg.answer(text, reply_markup=kb, parse_mode="HTML")
 
 # --- Админка ---
