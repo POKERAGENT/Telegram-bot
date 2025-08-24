@@ -91,7 +91,7 @@ async def admin_panel(msg: types.Message):
     kb = InlineKeyboardMarkup(row_width=1)
     kb.add(
         InlineKeyboardButton("📊 Статистика", callback_data="stats"),
-        InlineKeyboardButton("📤 Рассылка", callback_data="broadcast")
+        InlineKeyboardButton("📤 Рассылка", callback_data="broadcast"),
         InlineKeyboardButton("👥 Пользователи", callback_data="users")
     )
         await msg.answer("🔧 Админ-панель:", reply_markup=kb)
