@@ -94,7 +94,7 @@ async def admin_panel(msg: types.Message):
         InlineKeyboardButton("📤 Рассылка", callback_data="broadcast")
         InlineKeyboardButton("👥 Пользователи", callback_data="users")
     )
-    await msg.answer("🔧 Админ-панель:", reply_markup=kb)
+        await msg.answer("🔧 Админ-панель:", reply_markup=kb)
 
 @dp.callback_query_handler(lambda c: c.data == "stats")
 async def send_stats(callback: types.CallbackQuery):
