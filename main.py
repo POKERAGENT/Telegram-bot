@@ -2,59 +2,66 @@ import os
 import asyncpg
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiohttp import web
 
 # --- Настройки и переменные ---
 TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_ID", 0))  # ID администратора
 WEBHOOK_URL = os.getenv("WEBHOOK")
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL")  # PostgreSQL подключение
 
 if not TOKEN:
     raise ValueError("❌ BOT_TOKEN не найден в переменных окружения!")
-
 if not DATABASE_URL:
     raise ValueError("❌ DATABASE_URL не найден в переменных окружения!")
 
 bot = Bot(token=TOKEN)
-dp = Dispatcher(bot)
+storage = MemoryStorage()
+dp = Dispatcher(bot, storage=storage)
 app = web.Application()
 
-# --- Подключение к базе ---
-async def create_db_pool():
-    return await asyncpg.create_pool(DATABASE_URL)
+# --- FSM для рассылки ---
+class BroadcastState(StatesGroup):
+    waiting_for_message = State()
 
-async def init_db(pool):
+# --- Работа с PostgreSQL ---
+async def init_db():
+    pool = await asyncpg.create_pool(DATABASE_URL)
     async with pool.acquire() as conn:
         await conn.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                id BIGINT PRIMARY KEY,
-                name TEXT,
-                username TEXT
-            )
+        CREATE TABLE IF NOT EXISTS users (
+            id BIGINT PRIMARY KEY,
+            name TEXT,
+            username TEXT
+        )
         """)
+    return pool
 
-# --- Работа с базой ---
 async def add_user(pool, user_id, name, username):
     async with pool.acquire() as conn:
         await conn.execute("""
-            INSERT INTO users (id, name, username)
-            VALUES ($1, $2, $3)
-            ON CONFLICT (id) DO UPDATE SET name = $2, username = $3
+        INSERT INTO users (id, name, username)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, username = EXCLUDED.username
         """, user_id, name, username)
 
 async def get_users_count(pool):
     async with pool.acquire() as conn:
-        return await conn.fetchval("SELECT COUNT(*) FROM users")
+        row = await conn.fetchrow("SELECT COUNT(*) FROM users")
+        return row["count"]
 
 async def get_all_users(pool):
     async with pool.acquire() as conn:
-        return await conn.fetch("SELECT id, name, username FROM users ORDER BY id")
+        return await conn.fetch("SELECT * FROM users")
 
 # --- Хэндлер приветствия ---
 @dp.message_handler(commands=["start"])
 async def start(msg: types.Message):
-    await add_user(app["db_pool"], msg.from_user.id, msg.from_user.first_name, msg.from_user.username)
+    pool = app["db_pool"]
+    await add_user(pool, msg.from_user.id, msg.from_user.first_name, msg.from_user.username)
 
     kb = InlineKeyboardMarkup(row_width=1)
     kb.add(
@@ -64,7 +71,7 @@ async def start(msg: types.Message):
         InlineKeyboardButton("📝 QQPK POKER - утроим депозит", url="https://qqpk8.app:51999?shareCode=MGACZ9"),
         InlineKeyboardButton("📝 POKERDOM +3000rub на ваш счет", url="https://5pd-stat.com/click/6875327e6bcc63790e5beb28/1786/16153/subaccount"),
         InlineKeyboardButton("📝 ACR +50$ на ваш счет", url="https://go.wpnaffiliates.com/visit/?bta=236750&nci=5378"),
-        InlineKeyboardButton("📝 TON POKER +30% Рейкбэк", url="https://t.me/myTonPokerBot/lobby?startapp=eyJhZnAiOiJZalZtTlRWak9UWmpObVExWkRZeFlqa3dOV1V3WWpkbFl6YzRPVGt5T1dVIn0"),
+        InlineKeyboardButton("📝 TON POKER +30% Рейкбэк", url="https://t.me/myTonPokerBot/lobby?startapp=eyJhZnAiOiJZalZtTlRWak9ObVExWkRZeFlqa3dOV1V3WWpkbFl6YzRPVGt5T1dVIn0"),
         InlineKeyboardButton("📝 1WIN +30% Рейкбэк", url="https://1wsmhl.life/?p=lu27"),
         InlineKeyboardButton("📝 RPTBET +20% Рейкбэк", url="https://click.rptbet.org/PaneSU76"),
         InlineKeyboardButton("📝 PHENOMPOKER +Призы/Розыгрыши", url="https://play.phenompoker.com/register?r=Agent"),
@@ -72,11 +79,11 @@ async def start(msg: types.Message):
     text = (f"<b>👋 Привет, {msg.from_user.first_name}!</b>\n\n"
             f"<b>Добро пожаловать!</b>\n\n"
             f"<b>Здесь собраны самые выгодные предложения для игроков:</b>\n\n"
-            f"💰 эксклюзивные бонусы при регистрации!\n"
-            f"🎁 бонусы на депозиты!\n"
-            f"♻️ дополнительный рейкбэк!\n"
+            f"💰 эксклюзивные бонусы при регистрации!\n\n"
+            f"🎁 бонусы на депозиты!\n\n"
+            f"♻️ дополнительный рейкбэк!\n\n"
             f"📈 доступ к закрытым акциям и сообществу!\n\n"
-            f"ℹ️ С подробными условиями каждого предложения, новостями и розыгрышами вы можете ознакомиться в нашем сообществе или на сайте в разделе АКЦИИ.\n\n"
+            f"ℹ️ С подробными условиями вы можете ознакомиться в нашем сообществе или на сайте!\n\n"
             f"<b>Выберите интересующий вас пункт:👇</b>")
     await msg.answer(text, reply_markup=kb, parse_mode="HTML")
 
@@ -85,12 +92,11 @@ async def start(msg: types.Message):
 async def admin_panel(msg: types.Message):
     if msg.from_user.id != ADMIN_ID:
         return
-
-    kb = InlineKeyboardMarkup(row_width=1)
+kb = InlineKeyboardMarkup(row_width=1)
     kb.add(
         InlineKeyboardButton("📊 Статистика", callback_data="stats"),
-        InlineKeyboardButton("📤 Рассылка", callback_data="broadcast"),
-        InlineKeyboardButton("👥 Пользователи", callback_data="users")
+        InlineKeyboardButton("📋 Пользователи", callback_data="users"),
+        InlineKeyboardButton("📤 Рассылка", callback_data="broadcast")
     )
     await msg.answer("🔧 Админ-панель:", reply_markup=kb)
 
@@ -103,44 +109,38 @@ async def send_stats(callback: types.CallbackQuery):
 async def list_users(callback: types.CallbackQuery):
     rows = await get_all_users(app["db_pool"])
     if not rows:
-        await callback.message.answer("❌ Пользователей пока нет.")
+        await callback.message.answer("📭 База пуста")
         return
-
-    text = "👥 <b>Список пользователей:</b>\n\n"
-    for user in rows:
-        user_id, name, username = user
-        username_display = f"@{username}" if username else "—"
-        text += f"<b>ID:</b> {user_id} | <b>Имя:</b> {name} | <b>Username:</b> {username_display}\n"
-
-    for chunk in [text[i:i+4000] for i in range(0, len(text), 4000)]:
-        await callback.message.answer(chunk, parse_mode="HTML")
+    text = "\n".join([f"🆔 {r['id']} | {r['name']} | @{r['username']}" for r in rows])
+    await callback.message.answer(f"📋 Пользователи:\n\n{text}")
 
 @dp.callback_query_handler(lambda c: c.data == "broadcast")
 async def start_broadcast(callback: types.CallbackQuery):
+    if callback.from_user.id != ADMIN_ID:
+        return
     await callback.message.answer("✏️ Введите текст рассылки:")
-    dp.register_message_handler(send_broadcast, lambda m: m.from_user.id == ADMIN_ID, state=None)
+    await BroadcastState.waiting_for_message.set()
 
-async def send_broadcast(msg: types.Message):
+@dp.message_handler(state=BroadcastState.waiting_for_message, content_types=types.ContentTypes.TEXT)
+async def send_broadcast(msg: types.Message, state: FSMContext):
     rows = await get_all_users(app["db_pool"])
     count = 0
-    for user_id, _, _ in rows:
+    for r in rows:
         try:
-            await bot.send_message(user_id, msg.text)
+            await bot.send_message(r["id"], msg.text)
             count += 1
         except:
             pass
     await msg.answer(f"✅ Сообщение отправлено {count} пользователям.")
-    dp.message_handlers.unregister(send_broadcast)
+    await state.finish()
 
 # --- Webhook ---
 async def on_startup(app):
     if not WEBHOOK_URL:
         raise ValueError("❌ WEBHOOK не найден в переменных окружения!")
     await bot.set_webhook(WEBHOOK_URL)
+    app["db_pool"] = await init_db()
     print(f"✅ Webhook установлен: {WEBHOOK_URL}")
-
-    app["db_pool"] = await create_db_pool()
-    await init_db(app["db_pool"])
 
 async def handle_request(request):
     if request.method == "POST":
