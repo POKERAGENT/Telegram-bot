@@ -92,7 +92,7 @@ async def start(msg: types.Message):
 async def admin_panel(msg: types.Message):
     if msg.from_user.id != ADMIN_ID:
         return
-kb = InlineKeyboardMarkup(row_width=1)
+    kb = InlineKeyboardMarkup(row_width=1)
     kb.add(
         InlineKeyboardButton("📊 Статистика", callback_data="stats"),
         InlineKeyboardButton("📋 Пользователи", callback_data="users"),
