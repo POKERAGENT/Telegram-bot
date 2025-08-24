@@ -92,6 +92,7 @@ async def admin_panel(msg: types.Message):
     kb.add(
         InlineKeyboardButton("📊 Статистика", callback_data="stats"),
         InlineKeyboardButton("📤 Рассылка", callback_data="broadcast")
+        InlineKeyboardButton("👥 Пользователи", callback_data="users")
     )
     await msg.answer("🔧 Админ-панель:", reply_markup=kb)
 
@@ -105,6 +106,24 @@ async def start_broadcast(callback: types.CallbackQuery):
     await callback.message.answer("✏️ Введите текст рассылки:")
     dp.register_message_handler(send_broadcast, lambda m: m.from_user.id == ADMIN_ID, state=None)
 
+@dp.callback_query_handler(lambda c: c.data == "users")
+async def list_users(callback: types.CallbackQuery):
+    rows = await get_all_users()
+    if not rows:
+        await callback.message.answer("❌ Пользователей пока нет.")
+        return
+
+    # Формируем список
+    text = "👥 <b>Список пользователей:</b>\n\n"
+    for user in rows:
+        user_id, name, username = user
+        username_display = f"@{username}" if username else "—"
+        text += f"<b>ID:</b> {user_id} | <b>Имя:</b> {name} | <b>Username:</b> {username_display}\n"
+
+    # Если слишком длинно — разбиваем
+    for chunk in [text[i:i+4000] for i in range(0, len(text), 4000)]:
+        await callback.message.answer(chunk, parse_mode="HTML")
+        
 async def send_broadcast(msg: types.Message):
     users = await get_users()
     count = 0
